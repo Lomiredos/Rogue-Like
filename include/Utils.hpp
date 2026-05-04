@@ -2,6 +2,10 @@
 #include "math/Vector2.hpp"
 #include "renderer/Renderer.hpp"
 
+#include <random>
+
+
+
 struct Camera {
     float x, y;
 
@@ -87,8 +91,13 @@ struct Cell {
     Tile type = Tile::EMPTY;
 };
 
-float lerp(float a, float b, float t) {
+inline float lerp(float a, float b, float t) {
     return a + (b - a) * t;
 }
 
 
+inline std::mt19937& getRng()
+{
+    static std::mt19937 rng(std::random_device{}());
+    return rng;
+}
