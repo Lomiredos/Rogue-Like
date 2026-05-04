@@ -14,6 +14,8 @@
 #include "Systems/RenderSystem.hpp"
 #include "Systems/MovementSystem.hpp"
 #include "Systems/PlayerControlSystem.hpp"
+#include "Systems/CollisionSystem.hpp"
+#include "Systems/DebugRenderSystem.hpp"
 
 
 class FightScene : public ee::Scene {
@@ -35,6 +37,8 @@ class FightScene : public ee::Scene {
     std::shared_ptr<RenderSystem>        m_renderSystem;
     std::shared_ptr<MovementSystem>      m_movementSystem;
     std::shared_ptr<AnimationSystem>     m_animationSystem;
+    std::shared_ptr<CollisionSystem>     m_collisionSystem;
+    std::shared_ptr<DebugRenderSystem>   m_debugRenderSystem;
     std::shared_ptr<PlayerControlSystem> m_playerControlSystem;
 
 public:

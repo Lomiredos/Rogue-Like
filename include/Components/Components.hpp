@@ -18,6 +18,10 @@ struct AnimationSet {
     int frameWidth = 16;
     int frameHeight = 16;
 };
+struct ColliderComponent{
+    ee::math::Vector2<float> size;
+    ee::math::Vector2<float> offset;
+};
 
 struct TransformComponent {
     ee::math::Vector2<float> position;

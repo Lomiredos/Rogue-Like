@@ -24,9 +24,10 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 	m_world.addComponent(m_playerId, SpriteComponent{ _renderer.getTexture("Tileset")});
 	m_world.addComponent(m_playerId, AnimationLoader::loadFromJson("assets/JsonAnimation/player.json"));
 	m_world.addComponent(m_playerId, MotionComponent{{0, 0}, 200});
+	m_world.addComponent(m_playerId, ColliderComponent{ {18, 24}, {27, 58} });
 	
 	auto& anim = m_world.getComponent<AnimationComponent>(m_playerId);
-	anim.drawSize = { 36.f, 59.f };
+	anim.drawSize = { 36.f, 58.f };
 	anim.hasDrawSize = true;
 	m_world.addComponent(m_playerId, PlayerTag{});
 
@@ -35,8 +36,9 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 void FightScene::onUpdate(float _dt)
 {
 	m_animationSystem->update(m_world, _dt);
-	m_movementSystem->update(m_world, _dt);
 	m_playerControlSystem->update(m_world, _dt);
+	m_collisionSystem->update(m_world, _dt);
+	m_movementSystem->update(m_world, _dt);
 
 	auto& trans = m_world.getComponent<TransformComponent>(m_playerId);
 	m_camera = ee::renderer::Camera{
@@ -56,8 +58,8 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 	constexpr int screenW = 900;
 	constexpr int screenH = 900;
 
-	int startX = std::max(0, (int)(m_camera.getX() / tileSize))-1;
-	int startY = std::max(0, (int)(m_camera.getY() / tileSize))-1;
+	int startX = std::max(0, (int)(m_camera.getX() / tileSize)-1);
+	int startY = std::max(0, (int)(m_camera.getY() / tileSize)-1);
 	int endX   = std::min((int)m_mapDown.size(),    startX + (int)(screenW / tileSize) + 2);
 	int endY   = std::min((int)m_mapDown[0].size(), startY + (int)(screenH / tileSize) + 2);
 
@@ -86,6 +88,11 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 
 	ee::renderer::SpriteBatch sb;
 	sb.DrawAll(_renderer, m_camera, m_spriteEntry);
+
+
+
+	m_debugRenderSystem->render(m_world, _renderer, m_camera);
+
 	 
 }
   
@@ -116,6 +123,20 @@ void FightScene::setUpSystem()
 	sig.set(ee::ecs::getComponentID<PlayerTag>());
 	m_world.setSystemSignature<PlayerControlSystem>(sig);
 	m_playerControlSystem->init();
+
+	m_collisionSystem = m_world.registerSystem<CollisionSystem>();
+	sig.reset();
+	sig.set(ee::ecs::getComponentID<TransformComponent>());
+	sig.set(ee::ecs::getComponentID<MotionComponent>());
+	sig.set(ee::ecs::getComponentID<ColliderComponent>());
+	m_world.setSystemSignature<CollisionSystem>(sig);
+	m_collisionSystem->init(m_mapDown);
+
+	m_debugRenderSystem = m_world.registerSystem<DebugRenderSystem>();
+	sig.reset();
+	sig.set(ee::ecs::getComponentID<TransformComponent>());
+	sig.set(ee::ecs::getComponentID<ColliderComponent>());
+	m_world.setSystemSignature<DebugRenderSystem>(sig);
 
 }
 
