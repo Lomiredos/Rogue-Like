@@ -24,7 +24,7 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 	m_world.addComponent(m_playerId, SpriteComponent{ _renderer.getTexture("Tileset")});
 	m_world.addComponent(m_playerId, AnimationLoader::loadFromJson("assets/JsonAnimation/player.json"));
 	m_world.addComponent(m_playerId, MotionComponent{{0, 0}, 200});
-	m_world.addComponent(m_playerId, ColliderComponent{ {18, 24}, {27, 58} });
+	m_world.addComponent(m_playerId, ColliderComponent{ {18, 24}, {13, 29} });
 	
 	auto& anim = m_world.getComponent<AnimationComponent>(m_playerId);
 	anim.drawSize = { 36.f, 58.f };
@@ -35,6 +35,7 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 
 void FightScene::onUpdate(float _dt)
 {
+	m_FlipSystem->update(m_world, _dt);
 	m_animationSystem->update(m_world, _dt);
 	m_playerControlSystem->update(m_world, _dt);
 	m_collisionSystem->update(m_world, _dt);
@@ -93,6 +94,21 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 
 	m_debugRenderSystem->render(m_world, _renderer, m_camera);
 
+
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			if (m_mapDown[x][y].type == Tile::EMPTY || isWalkable(m_mapDown[x][y].type)) continue;
+			ee::math::Rect<float> dst = { m_camera.getScreenX(x * tileSize), m_camera.getScreenY(y * tileSize), tileSize, tileSize };
+			_renderer.DrawRect(dst, { 255, 0, 0, 255 });
+		}
+	}
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			if (m_mapUp[x][y].type == Tile::EMPTY || isWalkable(m_mapUp[x][y].type)) continue;
+			ee::math::Rect<float> dst = { m_camera.getScreenX(x * tileSize), m_camera.getScreenY(y * tileSize), tileSize, tileSize };
+			_renderer.DrawRect(dst, { 255, 0, 0, 255 });
+		}
+	}
 	 
 }
   
@@ -137,6 +153,13 @@ void FightScene::setUpSystem()
 	sig.set(ee::ecs::getComponentID<TransformComponent>());
 	sig.set(ee::ecs::getComponentID<ColliderComponent>());
 	m_world.setSystemSignature<DebugRenderSystem>(sig);
+
+
+	m_FlipSystem = m_world.registerSystem<FlipSystem>();
+	sig.reset();
+	sig.set(ee::ecs::getComponentID<SpriteComponent>());
+	sig.set(ee::ecs::getComponentID<MotionComponent>());
+	m_world.setSystemSignature<FlipSystem>(sig);
 
 }
 

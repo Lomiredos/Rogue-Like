@@ -2,6 +2,7 @@
 #include "math/Vector2.hpp"
 #include "math/Rect.hpp"
 #include "renderer/Texture.hpp"
+#include "renderer/Renderer.hpp"
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -35,6 +36,9 @@ struct MotionComponent {
 struct SpriteComponent {
     std::shared_ptr<ee::renderer::Texture> texture;
     ee::math::Rect<float> srcRect;
+    float angle = 0;
+    ee::math::Vector2<float> center = { 0, 0 };
+    ee::renderer::FlipMode flip = ee::renderer::FlipMode::None;
 };
 
 struct AnimationComponent {

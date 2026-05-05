@@ -38,7 +38,7 @@ public:
                 drawH
             };
 
-            m_spriteEntries.push_back({ sprite.texture.get(), dst, srcRect });
+            m_spriteEntries.push_back({ sprite.texture.get(), dst, srcRect, sprite.angle, sprite.center, sprite.flip });
         }
 
     }

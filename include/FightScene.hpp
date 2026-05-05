@@ -16,6 +16,7 @@
 #include "Systems/PlayerControlSystem.hpp"
 #include "Systems/CollisionSystem.hpp"
 #include "Systems/DebugRenderSystem.hpp"
+#include "Systems/FlipSystem.hpp"
 
 
 class FightScene : public ee::Scene {
@@ -32,8 +33,9 @@ class FightScene : public ee::Scene {
     std::vector<ee::renderer::SpriteEntry> m_spriteEntry;
 
 
-    ee::ecs::EntityID m_playerId;
+    ee::ecs::EntityID m_playerId = 0;
 
+    std::shared_ptr<FlipSystem>          m_FlipSystem;
     std::shared_ptr<RenderSystem>        m_renderSystem;
     std::shared_ptr<MovementSystem>      m_movementSystem;
     std::shared_ptr<AnimationSystem>     m_animationSystem;
