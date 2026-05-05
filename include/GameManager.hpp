@@ -1,13 +1,13 @@
 
 #include "engine/Engine.hpp"
+#include "Inventory.hpp"
 
 
 
 class GameManager {
 
-
 	ee::Engine m_engine;
-
+	Inventory m_inventory;
 
 public:
 
@@ -15,4 +15,5 @@ public:
 
 	void run();
 
+	Inventory& getInventory() { return m_inventory; }
 };

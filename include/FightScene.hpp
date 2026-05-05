@@ -17,11 +17,13 @@
 #include "Systems/CollisionSystem.hpp"
 #include "Systems/DebugRenderSystem.hpp"
 #include "Systems/FlipSystem.hpp"
+#include "TileListLoader.hpp"
 
+class GameManager;
 
 class FightScene : public ee::Scene {
 
-   
+    GameManager* m_gameManager;
 
     ee::renderer::Camera m_camera;
 
@@ -31,6 +33,8 @@ class FightScene : public ee::Scene {
     ee::math::Vector2<float> m_spawnPoint;
 
     std::vector<ee::renderer::SpriteEntry> m_spriteEntry;
+    TileListLoader m_tileList;
+    float m_tileAnimTimer = 0.f;
 
 
     ee::ecs::EntityID m_playerId = 0;
@@ -44,7 +48,7 @@ class FightScene : public ee::Scene {
     std::shared_ptr<PlayerControlSystem> m_playerControlSystem;
 
 public:
-    FightScene() : ee::Scene({ 0, 0, 880, 880 }), m_camera(450, 450, 880, 880) {}
+    FightScene(GameManager* _gm) : ee::Scene({ 0, 0, 880, 880 }), m_camera(450, 450, 880, 880), m_gameManager(_gm) {}
 
     void onEnter(ee::renderer::Renderer& _renderer) override;
     void onUpdate(float _dt) override;
@@ -54,4 +58,5 @@ public:
 private:
     void setUpSystem();
     ee::math::Rect<float> getRectFromType(Tile _tile) const;
+    ee::math::Rect<float> getAnimatedRect(const std::string& _baseName, int _frameCount) const;
 };

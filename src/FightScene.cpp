@@ -2,7 +2,7 @@
 #include "FightScene.hpp"
 #include "Components/Components.hpp"
 #include "renderer/TextureManager.hpp"
-#include "AnimationLoader.hpp"
+#include "TileListLoader.hpp"
 
 #include <algorithm>
 
@@ -18,23 +18,33 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 
 	setUpSystem();
 
+	m_tileList.load("assets/tile_list_v1.7");
+	TileListLoader& tileList = m_tileList;
+
+	AnimationComponent playerAnim;
+	playerAnim.animationSet  = tileList.loadAnimationSet("knight_m");
+	playerAnim.currentAnimation = "idle";
+
 	m_playerId = m_world.createEntity();
 	m_world.addComponent(m_playerId, TransformComponent{ m_spawnPoint * 32.f });
 	m_world.addComponent(m_playerId, HealthComponent{ 100, 100 });
 	m_world.addComponent(m_playerId, SpriteComponent{ _renderer.getTexture("Tileset")});
-	m_world.addComponent(m_playerId, AnimationLoader::loadFromJson("assets/JsonAnimation/player.json"));
+	m_world.addComponent(m_playerId, playerAnim);
 	m_world.addComponent(m_playerId, MotionComponent{{0, 0}, 200});
-	m_world.addComponent(m_playerId, ColliderComponent{ {18, 24}, {13, 29} });
-	
+	m_world.addComponent(m_playerId, ColliderComponent{ {18, 24}, {11, 29} });
+
 	auto& anim = m_world.getComponent<AnimationComponent>(m_playerId);
 	anim.drawSize = { 36.f, 58.f };
 	anim.hasDrawSize = true;
 	m_world.addComponent(m_playerId, PlayerTag{});
 
+
+
 }
 
 void FightScene::onUpdate(float _dt)
 {
+	m_tileAnimTimer = fmod(m_tileAnimTimer + _dt, 0.12f * 3);
 	m_FlipSystem->update(m_world, _dt);
 	m_animationSystem->update(m_world, _dt);
 	m_playerControlSystem->update(m_world, _dt);
@@ -52,7 +62,7 @@ void FightScene::onUpdate(float _dt)
 
 void FightScene::onRender(ee::renderer::Renderer& _renderer)
 {
-
+	//##TODO animate tileset
 	m_spriteEntry.clear();
 
 	constexpr float tileSize = 32.f;
@@ -68,7 +78,7 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 		for (int y = startY; y < endY; y++) {
 			if (m_mapDown[x][y].type == Tile::EMPTY) continue;
 			ee::math::Rect<float> src = getRectFromType(m_mapDown[x][y].type);
-			ee::math::Rect<float> dst = { x * tileSize, y * tileSize, tileSize, tileSize };
+			ee::math::Rect<float> dst = { (float)(x * 32), (float)(y * 32), tileSize, tileSize };
 			m_spriteEntry.push_back({ _renderer.getTexture("Tileset").get(), dst, src });
 		}
 	}
@@ -81,8 +91,9 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 		for (int y = startY; y < endY; y++) {
 			if (m_mapUp[x][y].type == Tile::EMPTY) continue;
 			ee::math::Rect<float> src = getRectFromType(m_mapUp[x][y].type);
-			ee::math::Rect<float> dst = { x * tileSize, y * tileSize, tileSize, tileSize };
-			m_spriteEntry.push_back({ _renderer.getTexture("Tileset").get(), dst, src });
+			ee::math::Rect<float> dst = { (float)(x * 32), (float)(y * 32), tileSize, tileSize };
+
+m_spriteEntry.push_back({ _renderer.getTexture("Tileset").get(), dst, src });
 		}
 	}
 
@@ -93,23 +104,6 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 
 
 	m_debugRenderSystem->render(m_world, _renderer, m_camera);
-
-
-	for (int x = startX; x < endX; x++) {
-		for (int y = startY; y < endY; y++) {
-			if (m_mapDown[x][y].type == Tile::EMPTY || isWalkable(m_mapDown[x][y].type)) continue;
-			ee::math::Rect<float> dst = { m_camera.getScreenX(x * tileSize), m_camera.getScreenY(y * tileSize), tileSize, tileSize };
-			_renderer.DrawRect(dst, { 255, 0, 0, 255 });
-		}
-	}
-	for (int x = startX; x < endX; x++) {
-		for (int y = startY; y < endY; y++) {
-			if (m_mapUp[x][y].type == Tile::EMPTY || isWalkable(m_mapUp[x][y].type)) continue;
-			ee::math::Rect<float> dst = { m_camera.getScreenX(x * tileSize), m_camera.getScreenY(y * tileSize), tileSize, tileSize };
-			_renderer.DrawRect(dst, { 255, 0, 0, 255 });
-		}
-	}
-	 
 }
   
 void FightScene::setUpSystem()
@@ -163,6 +157,15 @@ void FightScene::setUpSystem()
 
 }
 
+ee::math::Rect<float> FightScene::getAnimatedRect(const std::string& _baseName, int _frameCount) const
+{
+	int frame = (int)(m_tileAnimTimer / 0.12f) % _frameCount;
+	std::string frameName = _baseName + "_anim_f" + std::to_string(frame);
+	auto rect = m_tileList.getSpriteRect(frameName);
+	if (rect) return *rect;
+	return m_tileList.getSpriteRect(_baseName + "_anim_f0").value_or(ee::math::Rect<float>{0,0,16,16});
+}
+
 ee::math::Rect<float> FightScene::getRectFromType(Tile _tile) const
 {
 	switch (_tile) {
@@ -191,10 +194,10 @@ ee::math::Rect<float> FightScene::getRectFromType(Tile _tile) const
 	case Tile::FLOOR_8B: return { 32, 320, 16, 16 };
 
 
-	case Tile::WALL_MID_FOUNTAIN_W:    return { 64, 16, 16, 16 };
-	case Tile::WALL_MID_FOUNTAIN_L:    return { 64, 48, 16, 16 };
-	case Tile::WALL_BOTTOM_FOUNTAIN_W: return { 64, 32, 16, 16 };
-	case Tile::WALL_BOTTOM_FOUNTAIN_L: return { 64, 64, 16, 16 };
+	case Tile::WALL_MID_FOUNTAIN_W:    return getAnimatedRect("wall_fountain_mid_red",   3);
+	case Tile::WALL_MID_FOUNTAIN_L:    return getAnimatedRect("wall_fountain_mid_blue",  3);
+	case Tile::WALL_BOTTOM_FOUNTAIN_W: return getAnimatedRect("wall_fountain_basin_red", 3);
+	case Tile::WALL_BOTTOM_FOUNTAIN_L: return getAnimatedRect("wall_fountain_basin_blue",3);
 	case Tile::WALL_TOP_FOUNTAIN_1:    return { 64, 0 , 16, 16 };
 	case Tile::WALL_TOP_FOUNTAIN_2:    return { 80, 0 , 16, 16 };
 	case Tile::WALL_TOP_FOUNTAIN_3:    return { 96, 0 , 16, 16 };

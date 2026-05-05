@@ -9,15 +9,13 @@
 #include <memory>
 
 struct AnimationClip {
-    std::vector<int> frames;
+    std::vector<ee::math::Rect<float>> frames;
     float frameTime = 0.1f;
     bool loop = true;
 };
 
 struct AnimationSet {
     std::unordered_map<std::string, AnimationClip> clips;
-    int frameWidth = 16;
-    int frameHeight = 16;
 };
 struct ColliderComponent{
     ee::math::Vector2<float> size;

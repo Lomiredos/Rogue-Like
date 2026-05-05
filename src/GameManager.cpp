@@ -3,6 +3,6 @@
 
 void GameManager::run()
 {
-	m_engine.addScene(std::make_unique<FightScene>());
+	m_engine.addScene(std::make_unique<FightScene>(this));
 	m_engine.run();
 }

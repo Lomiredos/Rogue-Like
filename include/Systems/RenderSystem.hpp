@@ -27,8 +27,8 @@ public:
             {
                 auto& anim = _world.getComponent<AnimationComponent>(id);
                 srcRect = anim.srcRect;
-                drawW = anim.hasDrawSize ? anim.drawSize.x : (float)anim.animationSet.frameWidth;
-                drawH = anim.hasDrawSize ? anim.drawSize.y : (float)anim.animationSet.frameHeight;
+                drawW = anim.hasDrawSize ? anim.drawSize.x : anim.srcRect.getSize().x;
+                drawH = anim.hasDrawSize ? anim.drawSize.y : anim.srcRect.getSize().y;
             }
 
             ee::math::Rect<float> dst = {

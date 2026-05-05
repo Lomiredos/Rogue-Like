@@ -45,6 +45,15 @@ public:
 			if (ee::input::InputManager::getInstance().getAxisForce(ee::input::GamepadAxis::LeftY) < -0.1f) motion.velocity.y = ee::input::InputManager::getInstance().getAxisForce(ee::input::GamepadAxis::LeftY);
 
 			motion.velocity = motion.velocity.Normalize();
+
+			if (_world.hasComponent<AnimationComponent>(id))
+			{
+				auto& anim = _world.getComponent<AnimationComponent>(id);
+				if (motion.velocity.x != 0 || motion.velocity.y != 0)
+					anim.play("run");
+				else
+					anim.play("idle");
+			}
 		}
 	}
 };

@@ -17,14 +17,7 @@ public:
             const AnimationClip& clip = it->second;
 
             auto updateSrcRect = [&]() {
-                int frame = clip.frames[anim.currentFrame];
-                int cols  = (int)(_world.getComponent<SpriteComponent>(id).texture->getWidth() / anim.animationSet.frameWidth);
-                anim.srcRect = {
-                    (float)(frame % cols * anim.animationSet.frameWidth),
-                    (float)(frame / cols * anim.animationSet.frameHeight),
-                    (float)anim.animationSet.frameWidth,
-                    (float)anim.animationSet.frameHeight
-                };
+                anim.srcRect = clip.frames[anim.currentFrame];
             };
 
             if (anim.srcRect.getSize().x == 0)
