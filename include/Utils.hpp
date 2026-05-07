@@ -1,5 +1,7 @@
 #pragma once
 #include "math/Vector2.hpp"
+#include "math/Rect.hpp"
+#include "tmx/TmxParser.hpp"
 #include "renderer/Renderer.hpp"
 
 #include <random>
@@ -33,10 +35,10 @@ enum class Tile {
 
     //fontaine
     WALL_MID_FOUNTAIN_W = -35,
-    WALL_BOTTOM_FOUNTAIN_W = -36,
+    WALL_BOTTOM_FOUNTAIN_W = 36,
 
     WALL_MID_FOUNTAIN_L = -37,
-    WALL_BOTTOM_FOUNTAIN_L = -38,
+    WALL_BOTTOM_FOUNTAIN_L = 38,
 
     //top
     WALL_TOP_FOUNTAIN_1 = -39,
@@ -77,6 +79,10 @@ enum class Tile {
     WALL_TSHAPE_BOTTOM_LEFT = -32,
     WALL_TSHAPE_RIGHT = -33,
     WALL_TSHAPE_LEFT = -34,
+
+    WALL_WITH_BOTTOM_MID = -46,
+    WALL_WITH_BOTTOM_LEFT = -47,
+    WALL_WITH_BOTTOM_RIGHT = -48,
 };
 
 inline bool isWalkable(Tile t) {
@@ -100,4 +106,12 @@ inline std::mt19937& getRng()
 {
     static std::mt19937 rng(std::random_device{}());
     return rng;
+}
+
+inline ee::math::Rect<float> tileIdToRect(const ee::tmx::TmxTileset& _tileset, int _id) {
+    return { (float)(_id% _tileset.columns* _tileset.tileWidth), (float)(_id / _tileset.columns * _tileset.tileHeight), (float)(_tileset.tileWidth), (float)(_tileset.tileHeight) };
+}
+
+inline int rectToTileId(const ee::tmx::TmxTileset& _tileset, int x, int y) {
+    return (y / _tileset.tileWidth) * _tileset.columns + (x / _tileset.tileHeight);
 }

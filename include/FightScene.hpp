@@ -17,11 +17,21 @@
 #include "Systems/CollisionSystem.hpp"
 #include "Systems/DebugRenderSystem.hpp"
 #include "Systems/FlipSystem.hpp"
+#include "Systems/ItemPickupSystem.hpp"
+#include "Systems/EquippedItemSystem.hpp"
+#include "Systems/MeleeHitSystem.hpp"
 #include "TileListLoader.hpp"
+#include "Items/Weapons/WeaponFactory.hpp"
 
 class GameManager;
 
 class FightScene : public ee::Scene {
+
+
+
+    enum class Action {downGradeInv, upGradeInv, reGenerate, swichUp,swichDown};
+
+    ee::input::ActionMap<Action> m_actionMap;
 
     GameManager* m_gameManager;
 
@@ -38,6 +48,8 @@ class FightScene : public ee::Scene {
 
 
     ee::ecs::EntityID m_playerId = 0;
+    std::optional<ee::ecs::EntityID> m_equippedEntityId;
+    ee::renderer::Renderer* m_renderer = nullptr;
 
     std::shared_ptr<FlipSystem>          m_FlipSystem;
     std::shared_ptr<RenderSystem>        m_renderSystem;
@@ -46,6 +58,10 @@ class FightScene : public ee::Scene {
     std::shared_ptr<CollisionSystem>     m_collisionSystem;
     std::shared_ptr<DebugRenderSystem>   m_debugRenderSystem;
     std::shared_ptr<PlayerControlSystem> m_playerControlSystem;
+    std::shared_ptr<ItemPickUpSystem>    m_itemPickupSystem;
+    std::shared_ptr<EquippedWeaponSystem> m_equippedItemSystem;
+    std::shared_ptr<MeleeHitSystem>       m_meleeHitSystem;
+    ee::ecs::EntityID m_enemyId = 0;
 
 public:
     FightScene(GameManager* _gm) : ee::Scene({ 0, 0, 880, 880 }), m_camera(450, 450, 880, 880), m_gameManager(_gm) {}
@@ -57,6 +73,8 @@ public:
 
 private:
     void setUpSystem();
+    void refreshEquippedEntity();
+    void DrawUi(ee::renderer::Renderer& _renderer);
     ee::math::Rect<float> getRectFromType(Tile _tile) const;
     ee::math::Rect<float> getAnimatedRect(const std::string& _baseName, int _frameCount) const;
 };

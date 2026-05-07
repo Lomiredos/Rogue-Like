@@ -17,10 +17,9 @@ class TileListLoader {
 public:
     void load(const std::string& _path);
 
-    // Pour les entités animées : regroupe les frames par clip et construit l'AnimationSet
-    // Convention : {entity}_{clip}_anim_f{N} ou {entity}_{clip}_f{N}
+    //anime
     AnimationSet loadAnimationSet(const std::string& _entityName) const;
 
-    // Pour les sprites statiques (items, weapons...)
+    //static
     std::optional<ee::math::Rect<float>> getSpriteRect(const std::string& _name) const;
 };

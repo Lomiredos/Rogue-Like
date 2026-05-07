@@ -20,7 +20,7 @@ ee::math::Vector2<float> DungeonGenerator::generate(
 	do {
 		m_rooms.clear();
 		// Init maps
-		mapDown.assign(MAP_SIZE, std::vector<Cell>(MAP_SIZE, { Tile::EMPTY}));
+		mapDown.assign(MAP_SIZE, std::vector<Cell>(MAP_SIZE, { Tile::EMPTY }));
 		mapUp.assign(MAP_SIZE, std::vector<Cell>(MAP_SIZE, { Tile::EMPTY }));
 
 		std::uniform_int_distribution<int> dist_pos(15, 45);
@@ -28,7 +28,7 @@ ee::math::Vector2<float> DungeonGenerator::generate(
 
 		createMaze((int)spawnPos.x, (int)spawnPos.y);
 
-		// Ouvrir les murs isolés
+		// Ouvrir les murs isolï¿½s
 		for (int x = 1; x < MAP_SIZE - 2; x++) {
 			for (int y = 1; y < MAP_SIZE - 2; y++) {
 				if (isWalkable(mapDown[x][y].type)) continue;
@@ -72,7 +72,7 @@ ee::math::Vector2<float> DungeonGenerator::generate(
 	} while (countWalkableSize() < 1000);
 
 
-	// Passe de décoration des murs
+	// Passe de dï¿½coration des murs
 	for (int x = MAP_SIZE - 2; x > 1; x--) {
 		for (int y = MAP_SIZE - 2; y > 1; y--) {
 
@@ -158,8 +158,37 @@ ee::math::Vector2<float> DungeonGenerator::generate(
 			else {
 				mapDown[x][y].type = Tile::EMPTY;
 			}
+
 		}
 	}
+
+
+
+	//##TODO fix
+	/*
+	for (int x = 2; x < MAP_SIZE - 2; x++) {
+		for (int y = 2; y < MAP_SIZE - 2; y++) {
+			if (mapUp[x][y].type == Tile::WALL_MID && mapDown[x][y + 1].type == Tile::WALL_MID) {
+
+				if (isWall(mapUp[x - 1][y].type) && isWall(mapUp[x + 1][y].type))
+					mapUp[x][y].type = Tile::WALL_WITH_BOTTOM_MID;
+				else if (isWall(mapUp[x - 1][y].type))
+					mapUp[x][y].type = Tile::WALL_WITH_BOTTOM_RIGHT;
+				else
+					mapUp[x][y].type = Tile::WALL_WITH_BOTTOM_LEFT;
+
+			}
+
+			if (mapUp[x][y].type == Tile::WALL_EDGE_MID_RIGHT && isWall(mapDown[x][y + 1].type) && isWall(mapDown[x+1][y+1].type)) {
+				mapUp[x][y].type == Tile::WALL_WITH_BOTTOM_RIGHT;
+			}
+			if (mapUp[x][y].type == Tile::WALL_EDGE_MID_LEFT && isWall(mapDown[x][y + 1].type) && isWall(mapDown[x - 1][y + 1].type)) {
+				mapUp[x][y].type == Tile::WALL_WITH_BOTTOM_RIGHT;
+			}
+		}
+	}
+	*/
+
 	placeDeco();
 
 	outRooms = m_rooms;
@@ -203,22 +232,22 @@ void DungeonGenerator::createRoom(ee::math::Rect<float> rect, bool first)
 	if (exist[0]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaX(*m_rng) - large));
-		createTunnel({ rect.x() + pla - large / 2, rect.y() - size + 1, large, size}, 0, 0);
+		createTunnel({ rect.x() + pla - large / 2, rect.y() - size + 1, large, size }, 0, 0);
 	}
 	if (exist[1]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaX(*m_rng) - large));
-		createTunnel({ rect.x() + pla - large / 2, rect.y() + rect.h() - 1, large, size}, 0, 1);
+		createTunnel({ rect.x() + pla - large / 2, rect.y() + rect.h() - 1, large, size }, 0, 1);
 	}
 	if (exist[2]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaY(*m_rng) - large));
-		createTunnel({ rect.x() - size + 1, rect.y() + pla - large / 2, size, large}, 0, 0);
+		createTunnel({ rect.x() - size + 1, rect.y() + pla - large / 2, size, large }, 0, 0);
 	}
 	if (exist[3]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaY(*m_rng) - large));
-		createTunnel({ rect.x() + rect.w() - 1, rect.y() + pla - large / 2, size, large}, 1, 0);
+		createTunnel({ rect.x() + rect.w() - 1, rect.y() + pla - large / 2, size, large }, 1, 0);
 	}
 }
 
@@ -237,9 +266,9 @@ void DungeonGenerator::createTunnel(ee::math::Rect<float> rect, float anchorX, f
 	float side = std::min(rect.w(), rect.h());
 
 	if (dist_what(*m_rng) == 1)
-		createRoom({ rect.x() + rect.w() * anchorX - 1, rect.y() + rect.h() * anchorY - 1, side + dist_size(*m_rng), side + dist_size(*m_rng)}, false);
+		createRoom({ rect.x() + rect.w() * anchorX - 1, rect.y() + rect.h() * anchorY - 1, side + dist_size(*m_rng), side + dist_size(*m_rng) }, false);
 	else
-		createIntersection({ rect.x() + rect.w() * anchorX - 1, rect.y() + rect.h() * anchorY - 1, side + 2, side + 2});
+		createIntersection({ rect.x() + rect.w() * anchorX - 1, rect.y() + rect.h() * anchorY - 1, side + 2, side + 2 });
 }
 
 void DungeonGenerator::createIntersection(ee::math::Rect<float> rect)
@@ -269,22 +298,22 @@ void DungeonGenerator::createIntersection(ee::math::Rect<float> rect)
 	if (exist[0]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaX(*m_rng) - large));
-		createTunnel({ rect.x() + pla - large / 2, rect.y() - size + 1, large, size}, 0, 0);
+		createTunnel({ rect.x() + pla - large / 2, rect.y() - size + 1, large, size }, 0, 0);
 	}
 	if (exist[1]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaX(*m_rng) - large));
-		createTunnel({ rect.x() + pla - large / 2, rect.y() + rect.h() - 1, large, size}, 0, 1);
+		createTunnel({ rect.x() + pla - large / 2, rect.y() + rect.h() - 1, large, size }, 0, 1);
 	}
 	if (exist[2]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaY(*m_rng) - large));
-		createTunnel({ rect.x() - size + 1, rect.y() + pla - large / 2, size, large}, 0, 0);
+		createTunnel({ rect.x() - size + 1, rect.y() + pla - large / 2, size, large }, 0, 0);
 	}
 	if (exist[3]) {
 		size = dist_size(*m_rng); large = dist_large(*m_rng);
 		pla = std::max(large, (float)(dist_plaY(*m_rng) - large));
-		createTunnel({ rect.x() + rect.w() - 1, rect.y() + pla - large / 2, size, large}, 1, 0);
+		createTunnel({ rect.x() + rect.w() - 1, rect.y() + pla - large / 2, size, large }, 1, 0);
 	}
 }
 
@@ -424,7 +453,7 @@ void DungeonGenerator::placeDeco()
 		for (int x = x0; x <= x1; x++) {
 
 			if (!isWall(mapDown[x][y0].type)) continue;
-			if (!isWall(mapDown[x - 1][y0].type) && isWall(mapDown[x + 1][y0].type)) continue;
+			if (mapDown[x - 1][y0].type != Tile::WALL_MID || mapDown[x + 1][y0].type != Tile::WALL_MID) continue;
 			if (fountainChance(*m_rng) != 0)  continue;
 
 			mapDown[x][y0].type = tunnel.type == 0 ? Tile::WALL_MID_FOUNTAIN_L : Tile::WALL_MID_FOUNTAIN_W;

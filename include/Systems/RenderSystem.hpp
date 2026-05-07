@@ -20,8 +20,8 @@ public:
             auto& sprite = _world.getComponent<SpriteComponent>(id);
 
             ee::math::Rect<float> srcRect = sprite.srcRect;
-            float drawW = srcRect.getSize().x;
-            float drawH = srcRect.getSize().y;
+            float drawW = sprite.hasDrawSize ? sprite.drawSize.x : srcRect.getSize().x;
+            float drawH = sprite.hasDrawSize ? sprite.drawSize.y : srcRect.getSize().y;
 
             if (_world.hasComponent<AnimationComponent>(id))
             {
@@ -32,8 +32,8 @@ public:
             }
 
             ee::math::Rect<float> dst = {
-                trans.position.x,
-                trans.position.y,
+                trans.position.x + sprite.offset.x,
+                trans.position.y + sprite.offset.y,
                 drawW,
                 drawH
             };

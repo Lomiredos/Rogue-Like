@@ -16,7 +16,7 @@ public:
 			auto& transform = _world.getComponent<TransformComponent>(id);
 			auto& motion = _world.getComponent<MotionComponent>(id);
 
-			ee::math::Vector2<float> translation = motion.velocity * motion.speed * _dt;
+			ee::math::Vector2<float> translation = motion.velocity * (motion.speed * motion.speedMultiplier) * _dt;
 
 			transform.position += translation;
 

@@ -3,6 +3,7 @@
 #include "math/Rect.hpp"
 #include "renderer/Texture.hpp"
 #include "renderer/Renderer.hpp"
+#include "ecs/EntityManager.hpp"
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -10,7 +11,7 @@
 
 struct AnimationClip {
     std::vector<ee::math::Rect<float>> frames;
-    float frameTime = 0.1f;
+    float frameTime = 4.f;
     bool loop = true;
 };
 
@@ -29,6 +30,7 @@ struct TransformComponent {
 struct MotionComponent {
     ee::math::Vector2<float> velocity;
     float speed;
+    float speedMultiplier = 1.f;
 };
 
 struct SpriteComponent {
@@ -36,6 +38,9 @@ struct SpriteComponent {
     ee::math::Rect<float> srcRect;
     float angle = 0;
     ee::math::Vector2<float> center = { 0, 0 };
+    ee::math::Vector2<float> offset = { 0, 0 };
+    bool hasDrawSize = false;
+    ee::math::Vector2<float> drawSize = { 0, 0 };
     ee::renderer::FlipMode flip = ee::renderer::FlipMode::None;
 };
 
@@ -75,4 +80,10 @@ struct HealthComponent {
     float ratio() const { return (float)current / max; }
 };
 
-struct PlayerTag {};
+struct PlayerInfo
+{
+    float pickupRange;
+    std::unordered_map<ee::ecs::EntityID, float> hitList;
+};
+
+struct EnemyTag {};

@@ -76,7 +76,7 @@ AnimationSet TileListLoader::loadAnimationSet(const std::string& _entityName) co
             [](const auto& a, const auto& b) { return a.first < b.first; });
 
         AnimationClip ac;
-        ac.frameTime = 0.12f;
+        ac.frameTime = 0.2f;
         ac.loop = true;
 
         for (auto& [idx, entry] : frames)
