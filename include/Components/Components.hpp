@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <queue>
 
 struct AnimationClip {
     std::vector<ee::math::Rect<float>> frames;
@@ -78,6 +79,14 @@ struct HealthComponent {
 
     bool isDead() const { return current <= 0; }
     float ratio() const { return (float)current / max; }
+};
+
+struct PathFindingComponent {
+    enum class Type {};
+    float range;
+    Type type;
+    float timer;
+    std::queue<ee::math::Vector2<int>> path;
 };
 
 struct PlayerInfo

@@ -6,15 +6,20 @@
 #include "Components/WeaponsComponents.hpp"
 #include "renderer/Renderer.hpp"
 #include "renderer/Camera.hpp"
+#include "Items/Weapons/WeaponFactory.hpp"
 #include <vector>
 #include <cmath>
-#include <iostream>
+#include <algorithm>
+#include <cstdlib>
 
 class MeleeHitSystem : public ee::ecs::System {
 
 private:
 	std::vector<ee::ecs::EntityID> m_enemies;
+	std::unordered_map<ee::ecs::EntityID, std::pair<ee::ecs::EntityID, WeaponData>> m_enemyWeapons;
 	ee::ecs::EntityID m_playerID = 0;
+	float m_playerHitTimer = 0.f;
+	ee::renderer::Renderer* m_renderer = nullptr;
 
 	// retour sur [-180, 180] pour que la comparaison soit symétrique dans les deux sens
 	float angleDiff(float _a, float _b)
@@ -38,7 +43,7 @@ private:
 		return t.position;
 	}
 
-	// 8 points (coins + milieux) plutôt que le centre seul → évite les faux-négatifs sur les grands ennemis
+	// 8 points
 	std::vector<ee::math::Vector2<float>> getTestPoints(ee::ecs::World& _world, ee::ecs::EntityID _id)
 	{
 		auto& t = _world.getComponent<TransformComponent>(_id);
@@ -66,11 +71,18 @@ private:
 	}
 
 public:
-	void init(ee::ecs::EntityID _playerID) { m_playerID = _playerID; }
+	void init(ee::ecs::EntityID _playerID, ee::renderer::Renderer& _renderer) {
+		m_playerID = _playerID;
+		m_renderer = &_renderer;
+	}
 
 	void addEnemy(ee::ecs::EntityID _id) { m_enemies.push_back(_id); }
 
-	// visualise range (cercle) et cone (deux lignes) pour calibrer les armes
+	void addEnemyWeapon(ee::ecs::EntityID _enemyId, ee::ecs::EntityID _weaponId, const WeaponData& _data) {
+		m_enemyWeapons[_enemyId] = { _weaponId, _data };
+	}
+
+
 	void debugDraw(ee::ecs::World& _world, ee::renderer::Renderer& _renderer, const ee::renderer::Camera& _camera)
 	{
 		constexpr float DEG2RAD = 3.141592f / 180.f;
@@ -85,13 +97,13 @@ public:
 			float weaponAngle = equipped.rotation;
 			float coneHalf = equipped.coneSize;
 
-			// pivot en world space (sprite.center = point de rotation défini dans WeaponFactory)
+			
 			ee::math::Vector2<float> pivotWorld = {
 				weaponT.position.x + weaponS.center.x,
 				weaponT.position.y + weaponS.center.y
 			};
 
-			// converti en screen space
+			
 			ee::math::Vector2<float> origin = {
 				pivotWorld.x - _camera.getX(),
 				pivotWorld.y - _camera.getY()
@@ -114,9 +126,10 @@ public:
 
 	void update(ee::ecs::World& _world, float _dt)
 	{
+		std::vector<ee::ecs::EntityID> toDestroy;
 		auto& playerInfo = _world.getComponent<PlayerInfo>(m_playerID);
 
-		// expire les cooldowns d'invincibilité par ennemi (évite le damage spam)
+		// expire invincibilité par ennemi (quand le joueur les touche)
 		for (auto it = playerInfo.hitList.begin(); it != playerInfo.hitList.end();)
 		{
 			it->second -= _dt;
@@ -126,6 +139,9 @@ public:
 				++it;
 		}
 
+		// expire invincibilité universelle du joueur (quand un mob le touche)
+		if (m_playerHitTimer > 0.f) m_playerHitTimer -= _dt;
+
 		for (auto& weaponId : m_entities)
 		{
 			auto& melee    = _world.getComponent<MeleeComponent>(weaponId);
@@ -134,22 +150,45 @@ public:
 			auto& weaponS  = _world.getComponent<SpriteComponent>(weaponId);
 
 			float weaponAngle = equipped.rotation;
-			float coneHalf = equipped.coneSize;
+			float coneHalf    = equipped.coneSize;
 
-			// pivot = point de rotation de l'arme (sprite.center, défini dans WeaponFactory)
 			ee::math::Vector2<float> pivot = {
 				weaponT.position.x + weaponS.center.x,
 				weaponT.position.y + weaponS.center.y
 			};
 
-			for (auto& enemyId : m_enemies)
+			if (equipped.ownerID == m_playerID)
 			{
-				if (!_world.hasComponent<TransformComponent>(enemyId)) continue;
-				if (!_world.hasComponent<HealthComponent>(enemyId))    continue;
-				if (playerInfo.hitList.count(enemyId))                 continue; // encore en invincibilité
+				// arme du joueur → touche les ennemis
+				for (auto& enemyId : m_enemies)
+				{
+					if (!_world.hasComponent<TransformComponent>(enemyId)) continue;
+					if (!_world.hasComponent<HealthComponent>(enemyId))    continue;
+					if (playerInfo.hitList.count(enemyId))                 continue;
 
-				// on teste les 8 points du collider pour pas rater un grand ennemi
-				auto points = getTestPoints(_world, enemyId);
+					auto points = getTestPoints(_world, enemyId);
+					bool hit = false;
+					for (auto& pt : points)
+					{
+						ee::math::Vector2<float> dir = pt - pivot;
+						if (dir.Magnetude() > melee.range) continue;
+						if (angleDiff(weaponAngle, dir.Angle()) <= coneHalf) { hit = true; break; }
+					}
+					if (!hit) continue;
+
+					playerInfo.hitList[enemyId] = equipped.hitCooldown;
+					auto& hp = _world.getComponent<HealthComponent>(enemyId);
+					hp.current = std::max(0, hp.current - (int)melee.damage);
+					if (hp.current <= 0) toDestroy.push_back(enemyId);
+				}
+			}
+			else
+			{
+				// arme ennemie → touche le joueur uniquement (jamais son propre owner)
+				if (m_playerHitTimer > 0.f) continue;
+				if (!_world.hasComponent<HealthComponent>(m_playerID)) continue;
+
+				auto points = getTestPoints(_world, m_playerID);
 				bool hit = false;
 				for (auto& pt : points)
 				{
@@ -159,10 +198,31 @@ public:
 				}
 				if (!hit) continue;
 
-				// démarre le cooldown d'invincibilité pour cet ennemi
-				playerInfo.hitList[enemyId] = equipped.hitCooldown;
-				std::cout << "damaged" << std::endl;
+				m_playerHitTimer = equipped.hitCooldown;
+				auto& hp = _world.getComponent<HealthComponent>(m_playerID);
+				hp.current = std::max(0, hp.current - (int)melee.damage);
 			}
+		}
+
+		// traitement des morts après la boucle pour ne pas invalider les itérateurs
+		for (auto& deadId : toDestroy)
+		{
+			if (!_world.hasComponent<TransformComponent>(deadId)) continue;
+			ee::math::Vector2<float> pos = _world.getComponent<TransformComponent>(deadId).position;
+
+			if (m_enemyWeapons.count(deadId))
+			{
+				auto& [weaponId, weaponData] = m_enemyWeapons[deadId];
+				_world.destroyEntity(weaponId);
+
+				if (rand() % 2 == 0 && m_renderer)
+					WeaponFactory::spawnWeaponEntity(_world, *m_renderer, weaponData, pos);
+
+				m_enemyWeapons.erase(deadId);
+			}
+
+			_world.destroyEntity(deadId);
+			m_enemies.erase(std::remove(m_enemies.begin(), m_enemies.end(), deadId), m_enemies.end());
 		}
 	}
 };

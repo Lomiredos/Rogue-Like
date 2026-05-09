@@ -27,17 +27,16 @@ public:
 			auto& sprite = _world.getComponent<SpriteComponent>(id);
 
 			if (itemEquip.ownerID == m_playerID) {
-				// stick droit → direction de l'arme
+
 				ee::math::Vector2<float> joy;
 				joy.x = ee::input::InputManager::getInstance().getAxisForce(ee::input::GamepadAxis::RightX);
 				joy.y = ee::input::InputManager::getInstance().getAxisForce(ee::input::GamepadAxis::RightY);
-				if (joy.Magnetude() > 0.2f)  // deadzone pour éviter le drift
+				if (joy.Magnetude() > 0.2f)
 					itemEquip.rotation = joy.Angle();
 				else
-					itemEquip.rotation = 0 - itemEquip.baseRotation; // retour au repos
+					itemEquip.rotation = 0 - itemEquip.baseRotation;
 
-				// flip le joueur selon la direction de l'arme
-				// overFlip = joystick actif → on met à jour, sinon on garde la dernière direction
+
 				bool overFlip = itemEquip.rotation != -itemEquip.baseRotation;
 				bool isFlipped = itemEquip.rotation < -itemEquip.baseRotation || itemEquip.rotation > itemEquip.baseRotation;
 				auto& ownerSprite = _world.getComponent<SpriteComponent>(itemEquip.ownerID);
@@ -48,10 +47,8 @@ public:
 						ownerSprite.flip = ee::renderer::FlipMode((int)(ownerSprite.flip) & ~1);
 				}
 
-				// si le stick est relâché, on garde le flip précédent du owner
 				bool finalFlip = isFlipped || ownerSprite.flip == ee::renderer::FlipMode::Horizontale;
 
-				// oscillation verticale de l'arme ("respiration")
 				itemEquip.breathTimer += _dt * itemEquip.breathSpeed;
 				float breathOffset = std::sin(itemEquip.breathTimer) * itemEquip.breathAmplitude;
 
@@ -62,11 +59,11 @@ public:
 
 				if (_world.hasComponent<MotionComponent>(itemEquip.ownerID)) {
 					auto& motion = _world.getComponent<MotionComponent>(itemEquip.ownerID);
-					// marche arrière = se déplacer dans le sens opposé au flip
+
 					bool backpedaling = (finalFlip && motion.velocity.x > 0.1f) || (!finalFlip && motion.velocity.x < -0.1f);
 					if (backpedaling) {
 						float sum = std::abs(motion.velocity.x) + std::abs(motion.velocity.y);
-						// plus on marche en crabe, plus la pénalité est forte (max -50% si full horizontal)
+
 						float xFactor = (sum > 0.01f) ? std::abs(motion.velocity.x) / sum : 0.f;
 						motion.speedMultiplier = 1.f - xFactor * 0.5f;
 					}
@@ -76,11 +73,15 @@ public:
 
 			}
 			else {
-				// ennemi : l'arme pointe toujours vers le joueur
+
 				ee::math::Vector2<float> dir = playerTransform.position - itemTransform.position;
 				itemEquip.rotation = dir.Angle();
+				if (_world.hasComponent<PathFindingComponent>(itemEquip.ownerID)) {
+					if (_world.getComponent<PathFindingComponent>(itemEquip.ownerID).path.empty())
+						itemEquip.rotation = -itemEquip.baseRotation;
+				}
 
-				// copie le flip du owner pour que l'offset soit cohérent
+
 				bool isFlipped = _world.hasComponent<SpriteComponent>(itemEquip.ownerID) &&
 					_world.getComponent<SpriteComponent>(itemEquip.ownerID).flip == ee::renderer::FlipMode::Horizontale;
 				itemTransform.position = _world.getComponent<TransformComponent>(itemEquip.ownerID).position +
@@ -88,7 +89,7 @@ public:
 				sprite.flip = isFlipped ? ee::renderer::FlipMode::Horizontale : ee::renderer::FlipMode::None;
 			}
 
-			// baseRotation = rotation au repos de l'arme (ex: 90° pour que l'épée pointe vers la droite)
+
 			sprite.angle = itemEquip.rotation + itemEquip.baseRotation;
 		}
 	}

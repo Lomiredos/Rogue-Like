@@ -20,6 +20,8 @@
 #include "Systems/ItemPickupSystem.hpp"
 #include "Systems/EquippedItemSystem.hpp"
 #include "Systems/MeleeHitSystem.hpp"
+#include "Systems/PathFindingSystem.hpp"
+#include "Systems/HealthRenderSystem.hpp"
 #include "TileListLoader.hpp"
 #include "Items/Weapons/WeaponFactory.hpp"
 
@@ -51,16 +53,19 @@ class FightScene : public ee::Scene {
     std::optional<ee::ecs::EntityID> m_equippedEntityId;
     ee::renderer::Renderer* m_renderer = nullptr;
 
-    std::shared_ptr<FlipSystem>          m_FlipSystem;
-    std::shared_ptr<RenderSystem>        m_renderSystem;
-    std::shared_ptr<MovementSystem>      m_movementSystem;
-    std::shared_ptr<AnimationSystem>     m_animationSystem;
-    std::shared_ptr<CollisionSystem>     m_collisionSystem;
-    std::shared_ptr<DebugRenderSystem>   m_debugRenderSystem;
-    std::shared_ptr<PlayerControlSystem> m_playerControlSystem;
-    std::shared_ptr<ItemPickUpSystem>    m_itemPickupSystem;
-    std::shared_ptr<EquippedWeaponSystem> m_equippedItemSystem;
+    std::shared_ptr<FlipSystem>           m_FlipSystem;
+    std::shared_ptr<RenderSystem>         m_renderSystem;
+    std::shared_ptr<MovementSystem>       m_movementSystem;
     std::shared_ptr<MeleeHitSystem>       m_meleeHitSystem;
+    std::shared_ptr<AnimationSystem>      m_animationSystem;
+    std::shared_ptr<CollisionSystem>      m_collisionSystem;
+    std::shared_ptr<ItemPickUpSystem>     m_itemPickupSystem;
+    std::shared_ptr<PathFindingSystem>    m_pathFindingSystem;
+    std::shared_ptr<HealthRenderSystem>   m_healthRenderSystem;
+    std::shared_ptr<DebugRenderSystem>    m_debugRenderSystem;
+    std::shared_ptr<PlayerControlSystem>  m_playerControlSystem;
+    std::shared_ptr<EquippedWeaponSystem> m_equippedItemSystem;
+
     ee::ecs::EntityID m_enemyId = 0;
 
 public:

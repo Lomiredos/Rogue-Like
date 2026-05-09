@@ -46,7 +46,7 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 
 	m_playerId = m_world.createEntity();
 	m_world.addComponent(m_playerId, TransformComponent{ m_spawnPoint * 32.f });
-	m_world.addComponent(m_playerId, HealthComponent{ 100, 100 });
+	m_world.addComponent(m_playerId, HealthComponent{ 3, 3 });
 	m_world.addComponent(m_playerId, SpriteComponent{ _renderer.getTexture("Tileset") });
 	m_world.addComponent(m_playerId, playerAnim);
 	m_world.addComponent(m_playerId, MotionComponent{ {0, 0}, 350 });
@@ -59,25 +59,34 @@ void FightScene::onEnter(ee::renderer::Renderer& _renderer)
 
 	m_itemPickupSystem->init(m_playerId, m_gameManager->getInventory());
 	m_equippedItemSystem->init(m_playerId);
-	m_meleeHitSystem->init(m_playerId);
+	m_meleeHitSystem->init(m_playerId, _renderer);
+	m_pathFindingSystem->init(m_mapDown, m_playerId);
+	m_healthRenderSystem->init(m_tileList, _renderer);
 
 	AnimationComponent demonAnim;
 	demonAnim.animationSet = m_tileList.loadAnimationSet("big_demon");
 	demonAnim.currentAnimation = "idle";
-	demonAnim.drawSize = { 64.f, 72.f };
+	demonAnim.drawSize = { 48.f, 54.f };
 	demonAnim.hasDrawSize = true;
 
 	m_enemyId = m_world.createEntity();
-	m_world.addComponent(m_enemyId, TransformComponent{ m_spawnPoint * 32.f + ee::math::Vector2<float>{128.f, 0.f} });
-	m_world.addComponent(m_enemyId, HealthComponent{ 100, 100 });
+	m_world.addComponent(m_enemyId, TransformComponent{ m_spawnPoint * 32.f + ee::math::Vector2<float>{256.f, 0.f} });
+	m_world.addComponent(m_enemyId, HealthComponent{ 4, 4 });
 	m_world.addComponent(m_enemyId, SpriteComponent{ _renderer.getTexture("Tileset") });
 	m_world.addComponent(m_enemyId, demonAnim);
-	m_world.addComponent(m_enemyId, ColliderComponent{ {64, 72}, {0, 0} });
+	m_world.addComponent(m_enemyId, ColliderComponent{ {48, 54}, {0, 0} });
+	m_world.addComponent(m_enemyId, PathFindingComponent{ 250.f});
+	m_world.addComponent(m_enemyId, MotionComponent{ {0, 0}, 150.f });
 	m_world.addComponent(m_enemyId, EnemyTag{});
 
 	m_meleeHitSystem->addEnemy(m_enemyId);
 
-	WeaponFactory::spawnWeaponEntity(m_world, _renderer, WeaponFactory::makeEpee(25.f, 60.f), m_spawnPoint * 32.f + ee::math::Vector2<float>{64.f, 0.f});
+	auto demonWeapon = WeaponFactory::makeEpee(1.f, 60.f);
+	auto demonWeaponId = WeaponFactory::equipWeapon(m_world, _renderer, demonWeapon, m_enemyId,
+		m_world.getComponent<TransformComponent>(m_enemyId).position);
+	m_meleeHitSystem->addEnemyWeapon(m_enemyId, demonWeaponId, demonWeapon);
+
+	WeaponFactory::spawnWeaponEntity(m_world, _renderer, WeaponFactory::makeEpee(1.f, 60.f), m_spawnPoint * 32.f + ee::math::Vector2<float>{64.f, 0.f});
 }
 
 void FightScene::onUpdate(float _dt)
@@ -86,6 +95,8 @@ void FightScene::onUpdate(float _dt)
 	m_FlipSystem->update(m_world, _dt);
 	m_animationSystem->update(m_world, _dt);
 	m_playerControlSystem->update(m_world, _dt);
+	m_pathFindingSystem->update(m_world, _dt);
+	m_healthRenderSystem->update(_dt);
 	m_collisionSystem->update(m_world, _dt);
 	m_movementSystem->update(m_world, _dt);
 	int prevItemCount = (int)m_gameManager->getInventory().getItems().size();
@@ -184,6 +195,8 @@ void FightScene::onRender(ee::renderer::Renderer& _renderer)
 
 	m_debugRenderSystem->render(m_world, _renderer, m_camera);
 	m_meleeHitSystem->debugDraw(m_world, _renderer, m_camera);
+	m_pathFindingSystem->drawDebug(m_world, _renderer, m_camera);
+	m_healthRenderSystem->render(m_world, _renderer, m_camera);
 
 }
 
@@ -253,6 +266,21 @@ void FightScene::setUpSystem()
 	sig.set(ee::ecs::getComponentID<MeleeComponent>());
 	sig.set(ee::ecs::getComponentID<ItemEquippedComponent>());
 	m_world.setSystemSignature<MeleeHitSystem>(sig);
+
+
+	m_pathFindingSystem = m_world.registerSystem<PathFindingSystem>();
+	sig.reset();
+	sig.set(ee::ecs::getComponentID<TransformComponent>());
+	sig.set(ee::ecs::getComponentID<MotionComponent>());
+	sig.set(ee::ecs::getComponentID<PathFindingComponent>());
+	sig.set(ee::ecs::getComponentID<ColliderComponent>());
+	m_world.setSystemSignature<PathFindingSystem>(sig);
+
+	m_healthRenderSystem = m_world.registerSystem<HealthRenderSystem>();
+	sig.reset();
+	sig.set(ee::ecs::getComponentID<TransformComponent>());
+	sig.set(ee::ecs::getComponentID<HealthComponent>());
+	m_world.setSystemSignature<HealthRenderSystem>(sig);
 
 }
 

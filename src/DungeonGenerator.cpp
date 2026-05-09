@@ -28,7 +28,7 @@ ee::math::Vector2<float> DungeonGenerator::generate(
 
 		createMaze((int)spawnPos.x, (int)spawnPos.y);
 
-		// Ouvrir les murs isol�s
+		// Ouvrir les murs isoles
 		for (int x = 1; x < MAP_SIZE - 2; x++) {
 			for (int y = 1; y < MAP_SIZE - 2; y++) {
 				if (isWalkable(mapDown[x][y].type)) continue;
